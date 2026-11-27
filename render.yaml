@@ -1,6 +1,7 @@
 services:
   - type: web
     name: kruta-shop
-    env: docker
+    runtime: docker
     plan: free
     dockerfilePath: ./Dockerfile
+    autoDeploy: true

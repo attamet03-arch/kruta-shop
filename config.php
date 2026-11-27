@@ -11,11 +11,19 @@ $db_name = getenv('DB_NAME') ?: (getenv('MYSQLDATABASE') ?: 'kruta_shop');
 $db_port = getenv('DB_PORT') ?: (getenv('MYSQLPORT') ?: '3306');
 
 try {
-    $conn = new PDO("mysql:host=$db_host;port=$db_port;dbname=$db_name;charset=utf8mb4", $db_user, $db_pass, [
+    $pdo_options = [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::ATTR_EMULATE_PREPARES => false,
-    ]);
+    ];
+
+    // Enable SSL / TLS encryption if connecting to TiDB Cloud or remote cloud host
+    if ($db_port == '4000' || strpos($db_host, 'tidbcloud.com') !== false || strpos($db_host, 'aivencloud.com') !== false) {
+        $pdo_options[PDO::MYSQL_ATTR_SSL_CA] = true;
+        $pdo_options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
+    }
+
+    $conn = new PDO("mysql:host=$db_host;port=$db_port;dbname=$db_name;charset=utf8mb4", $db_user, $db_pass, $pdo_options);
 } catch (PDOException $e) {
     // If running on local XAMPP without database installed
     die("<div style='font-family:sans-serif; text-align:center; padding:50px;'>

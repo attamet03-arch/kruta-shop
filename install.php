@@ -1,12 +1,22 @@
 <?php
 // install.php - 1-Click Database Setup & Auto-seed
-$db_host = 'localhost';
-$db_user = 'root';
-$db_pass = '';
+$db_host = getenv('DB_HOST') ?: (getenv('MYSQLHOST') ?: 'localhost');
+$db_user = getenv('DB_USER') ?: (getenv('MYSQLUSER') ?: 'root');
+$db_pass = getenv('DB_PASS') !== false ? getenv('DB_PASS') : (getenv('MYSQLPASSWORD') ?: '');
+$db_port = getenv('DB_PORT') ?: (getenv('MYSQLPORT') ?: '3306');
+$db_name = getenv('DB_NAME') ?: (getenv('MYSQLDATABASE') ?: 'kruta_shop');
 
 try {
-    $pdo = new PDO("mysql:host=$db_host;charset=utf8mb4", $db_user, $db_pass);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo_options = [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+    ];
+
+    if ($db_port == '4000' || strpos($db_host, 'tidbcloud.com') !== false) {
+        $pdo_options[PDO::MYSQL_ATTR_SSL_CA] = true;
+        $pdo_options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
+    }
+
+    $pdo = new PDO("mysql:host=$db_host;port=$db_port;charset=utf8mb4", $db_user, $db_pass, $pdo_options);
     
     $sql = file_get_contents(__DIR__ . '/database.sql');
     $pdo->exec($sql);
